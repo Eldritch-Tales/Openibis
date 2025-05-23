@@ -110,7 +110,7 @@ def band_range(low, high, binsize):
 # Mean power in a frequency band
 def mean_band_power(psd, low, high, binsize):
     v = psd[:, band_range(low, high, binsize)]
-    return np.nanmean(10 * np.log10(v[~np.isnan(v)]))
+    return np.nanmean(10 * np.log10(v[~np.isnan(v)] + 1e-8))
 
 # Check if an epoch is burst-suppressed
 def is_not_burst_suppressed(BSRmap, n, p):
@@ -142,3 +142,19 @@ def mixer(components, BSR):
     x = (sedation_score * (1 - general_weight)) + (general_score * general_weight)
     y = piecewise(x, [-40, 10, 97, 110], [0, 10, 97, 100]) * (1 - bsr_weight) + bsr_score * bsr_weight
     return y
+
+# Piecewise linear interpolation function
+def piecewise(x, xp, yp):
+    x = np.array(x)
+    xp = np.array(xp)
+    yp = np.array(yp)
+    return np.interp(bound(x, xp[0], xp[-1]), xp, yp)
+
+# Logistic S-curve function
+def scurve(x, Eo, Emax, x50, xwidth):
+    x = np.array(x)
+    return Eo - Emax / (1 + np.exp((x - x50) / xwidth))
+
+# Bound the values between a lower and upper bound
+def bound(x, lower, upper):
+    return np.clip(x, lower, upper)
