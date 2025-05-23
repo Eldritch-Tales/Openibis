@@ -128,3 +128,17 @@ def prctmean(x, lo, hi):
     lower = np.percentile(x, lo)
     upper = np.percentile(x, hi)
     return np.mean(x[(x >= lower) & (x <= upper)])
+
+# Mixer: Calculates depth of anesthesia score
+def mixer(components, BSR):
+    sedation_score = scurve(components[:, 0], 104.4, 49.4, -13.9, 5.29)
+    general_score = piecewise(components[:, 1], [-60.89, -30], [-40, 43.1])
+    general_score += scurve(components[:, 1], 61.3, 72.6, -24.0, 3.55) * (components[:, 1] >= -30)
+
+    bsr_score = piecewise(BSR, [0, 100], [50, 0])
+    general_weight = piecewise(components[:, 2], [0, 5], [0.5, 1]) * (general_score < sedation_score)
+    bsr_weight = piecewise(BSR, [10, 50], [0, 1])
+
+    x = (sedation_score * (1 - general_weight)) + (general_score * general_weight)
+    y = piecewise(x, [-40, 10, 97, 110], [0, 10, 97, 100]) * (1 - bsr_weight) + bsr_score * bsr_weight
+    return y
