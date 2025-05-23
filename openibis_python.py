@@ -110,7 +110,7 @@ def band_range(low, high, binsize):
 # Mean power in a frequency band
 def mean_band_power(psd, low, high, binsize):
     v = psd[:, band_range(low, high, binsize)]
-    return np.nanmean(10 * np.log10(v[~np.isnan(v)] + 1e-8))
+    return np.nanmean(10 * np.log10(v + 1e-8))
 
 # Check if an epoch is burst-suppressed
 def is_not_burst_suppressed(BSRmap, n, p):
