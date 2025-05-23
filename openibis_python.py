@@ -102,3 +102,29 @@ def sawtooth_detector(eeg, n_stride):
     m = (np.vstack((conv1, conv2)) / len(saw))**2
     test = np.maximum((v > 10) * m[0] / v, (v > 10) * m[1] / v)
     return np.any(test > 0.63)
+
+# Band range for frequency bands
+def band_range(low, high, binsize):
+    return np.arange(int(low / binsize), int(high / binsize) + 1)
+
+# Mean power in a frequency band
+def mean_band_power(psd, low, high, binsize):
+    v = psd[:, band_range(low, high, binsize)]
+    return np.nanmean(10 * np.log10(v[~np.isnan(v)]))
+
+# Check if an epoch is burst-suppressed
+def is_not_burst_suppressed(BSRmap, n, p):
+    if n < p:
+        return False
+    return not np.any(BSRmap[n - p + 1:n + 1])
+
+# Time range for a given number of seconds before the current epoch
+def time_range(seconds, n, stride):
+    return np.arange(max(0, int(n - seconds / stride) + 1), n + 1)
+
+# Percentile-based mean calculation
+def prctmean(x, lo, hi):
+    x = np.array(x)
+    lower = np.percentile(x, lo)
+    upper = np.percentile(x, hi)
+    return np.mean(x[(x >= lower) & (x <= upper)])
