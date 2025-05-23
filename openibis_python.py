@@ -1,3 +1,7 @@
+# Author: Sriram Schelbert
+# Date: May 23, 2025
+
+
 import numpy as np
 from scipy.signal import butter, filtfilt, blackman, fftconvolve
 from scipy.fft import fft
@@ -79,3 +83,22 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
             pass  # Handle NaNs or range issues gracefully
 
     return components
+
+# Calculate the Power Spectral Density (PSD)
+def power_spectral_density(x):
+    x = x - baseline(x)
+    win = blackman(len(x))
+    f = fft(win * x)
+    return 2 * np.abs(f[:len(x)//2])**2 / (len(x) * np.sum(win**2))
+
+# Sawtooth detection for K-complexes
+def sawtooth_detector(eeg, n_stride):
+    saw = np.concatenate([np.zeros(n_stride - 5), np.arange(1, 6)])
+    saw = (saw - np.mean(saw)) / np.std(saw, ddof=1)
+    r = np.arange(len(eeg) - len(saw))
+    v = np.array([np.var(eeg[i:i+len(saw)]) for i in r])
+    conv1 = fftconvolve(eeg, saw[::-1], mode='valid')
+    conv2 = fftconvolve(eeg, saw, mode='valid')
+    m = (np.vstack((conv1, conv2)) / len(saw))**2
+    test = np.maximum((v > 10) * m[0] / v, (v > 10) * m[1] / v)
+    return np.any(test > 0.63)
