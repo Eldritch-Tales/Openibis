@@ -12,12 +12,6 @@ import math
 import h5py
 import matplotlib.pyplot as plt
 
-plt.plot(suppression_mask)
-plt.title("Suppression Mask Over Time")
-plt.xlabel("Epoch index")
-plt.ylabel("Suppressed (1) or Not (0)")
-plt.show()
-
 # Main function: openibis
 def openibis(eeg_input):
     # --- Load EEG from .mat file if needed ---
@@ -42,6 +36,9 @@ def openibis(eeg_input):
     print("Log power ratio components (first 10):", components[:10])
 
     depth_of_anesthesia = mixer(components, BSR)
+
+
+    
     return depth_of_anesthesia
 
 
