@@ -116,6 +116,14 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
             whole_band_alt = band_range(1, 47, 0.5)
             mid_band = band_range(11, 20, 0.5)
 
+            if n < 5:  # only print for first few epochs to reduce spam
+                print(f"\nEpoch {n}")
+                print("  PSD shape:", psd.shape)
+                print("  thirty_sec range:", thirty_sec)
+                print("  mid_band indices:", mid_band)
+                print("  vhigh_band indices:", vhigh_band)
+                print("  Sample PSD slice at thirty_sec[0]:", psd[thirty_sec[0]][:10])
+
             # Checks if the thirty second index range is empty, skips current iteration if so
             if len(thirty_sec) == 0 or np.isnan(psd[thirty_sec][:, mid_band]).all():
                 continue  # skip this epoch
@@ -127,7 +135,8 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
             components[n, 0] = mean_band_power(psd[thirty_sec], 30, 47, 0.5) - mid_power
             components[n, 1] = trim_mean(10 * np.log10(np.maximum(vhigh / whole), 1e-8), 0.5)
             components[n, 2] = mean_band_power(psd[thirty_sec], 0.5, 4, 0.5) - mid_power
-        except:
+        except Exception as e:
+            print(f"Exception in epoch {n}: {e}")
             pass  # Handle NaNs or range issues gracefully
 
     return components
@@ -182,9 +191,6 @@ def band_range(low, high, binsize):
 def mean_band_power(psd, fmin, fmax, bin_width):
     band = band_range(fmin, fmax, bin_width)
     v = psd[:, band]
-    print("PSD shape:", psd.shape)
-    print("Sample PSD slice:", psd[0, :10])
-    print("NaNs in PSD:", np.isnan(psd).sum())
     if np.isnan(v).all():
         return np.nan
     return np.nanmean(10 * np.log10(v + 1e-8))
