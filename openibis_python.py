@@ -226,8 +226,11 @@ def mean_band_power(psd, fmin, fmax, bin_width):
 # Check if an epoch is burst-suppressed
 def is_not_burst_suppressed(BSRmap, n, p):
     if n < p:
-        return False
-    return not np.any(BSRmap[n - p + 1:n + 1])
+        return True  # allow first few epochs unless proven suppressed
+    segment = BSRmap[n - p + 1 : n + 1]
+    if np.isnan(segment).all():
+        return False  # can't make a judgment if all values are NaN
+    return np.all(segment < 0.5)  # or whatever your threshold is
 
 # Time range for a given number of seconds before the current epoch
 def time_range(seconds, n, stride):
