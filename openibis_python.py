@@ -3,7 +3,7 @@
 
 
 import numpy as np
-from scipy.signal import butter, filtfilt, blackman, fftconvolve
+from scipy.signal import butter, filtfilt, fftconvolve
 from scipy.fft import fft
 from scipy.stats import trim_mean
 from scipy.ndimage import uniform_filter1d
@@ -114,7 +114,7 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
 # Calculate the Power Spectral Density (PSD)
 def power_spectral_density(x):
     x = x - baseline(x)
-    win = blackman(len(x))
+    win = np.blackman(len(x))
     f = fft(win * x)
     return 2 * np.abs(f[:len(x)//2])**2 / (len(x) * np.sum(win**2))
 
