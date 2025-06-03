@@ -131,26 +131,36 @@ def power_spectral_density(x):
 def sawtooth_detector(eeg, n_stride):
     saw = np.concatenate([np.zeros(n_stride - 5), np.arange(1, 6)])
     saw = (saw - np.mean(saw)) / np.std(saw, ddof=1)
-    
-    # Valid convolution length = len(eeg) - len(saw) + 1
+
     conv_len = len(eeg) - len(saw) + 1
     if conv_len <= 0:
-        return False  # Can't apply detector if EEG segment is too short
+        return False  # EEG segment too short
 
-    r = np.arange(conv_len)
-    v = np.array([np.var(eeg[i:i+len(saw)], ddof=1) for i in r])
+    # Compute variance over sliding windows
+    v = np.array([np.var(eeg[i:i+len(saw)], ddof=1) for i in range(conv_len)])
 
+    # Avoid division by zero or invalid values
+    v = np.where((v == 0) | np.isnan(v), np.nan, v)
+
+    # Convolutions with forward and reversed sawtooth
     conv1 = np.convolve(eeg, saw[::-1], mode='valid')
     conv2 = np.convolve(eeg, saw, mode='valid')
-    m = (np.stack([conv1, conv2]) / len(saw))**2
+    m = (np.stack([conv1, conv2]) / len(saw))**2  # shape (2, conv_len)
 
-    print("v:", v)
-    print("m:", m)
-    print("shapes - v:", v.shape, "m:", m.shape)
+    # Guard against all-NaN case
+    if np.isnan(v).all():
+        return False
 
-    v = np.where((v == 0) | np.isnan(v), np.nan, v)
-    m_ratio = np.maximum((v > 10) * m[0] / v, (v > 10) * m[1] / v)
-    return np.max(m_ratio) > 0.63
+    # Compute normalized match score where variance is valid
+    with np.errstate(invalid='ignore', divide='ignore'):
+        m_ratio_0 = np.where(v > 10, m[0] / v, 0)
+        m_ratio_1 = np.where(v > 10, m[1] / v, 0)
+        m_ratio = np.maximum(m_ratio_0, m_ratio_1)
+
+    # Optional debug print
+    # print("Max m_ratio:", np.nanmax(m_ratio))
+
+    return np.nanmax(m_ratio) > 0.63
 
 # Band range for frequency bands
 def band_range(low, high, binsize):
