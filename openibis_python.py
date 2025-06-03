@@ -7,7 +7,7 @@ from scipy.signal import butter, filtfilt, fftconvolve
 from scipy.fft import fft
 from scipy.stats import trim_mean
 from scipy.ndimage import uniform_filter1d
-from scipy.io import loadmat
+# from scipy.io import loadmat
 import math
 import h5py
 
@@ -27,11 +27,9 @@ def openibis(eeg_input):
 
 
 def load_mat_eeg(filename):
-    # Loads EEG data from a .mat file and returns it as a 1D NumPy array.
-    # Handles both standard and v7.3 (HDF5-based) .mat files.
-    
     try:
         # Try standard MATLAB format first
+        from scipy.io import loadmat
         data = loadmat(filename)
         eeg_key = next((k for k in data.keys() if not k.startswith('__')), None)
         if eeg_key is None:
