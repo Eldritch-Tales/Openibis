@@ -7,15 +7,42 @@ from scipy.signal import butter, filtfilt, blackman, fftconvolve
 from scipy.fft import fft
 from scipy.stats import trim_mean
 from scipy.ndimage import uniform_filter1d
+from scipy.io import loadmat
 import math
 
 # Main function: openibis
-def openibis(eeg):
+def openibis(eeg_input):
+    # --- Load EEG from .mat file if needed ---
+    if isinstance(eeg_input, str) and eeg_input.endswith('.mat'):
+        eeg = load_mat_eeg(eeg_input)
+    else:
+        eeg = np.asarray(eeg_input).squeeze()
+
     Fs, stride = 128, 0.5
     BSRmap, BSR = suppression(eeg, Fs, stride)
     components = log_power_ratios(eeg, Fs, stride, BSRmap)
     depth_of_anesthesia = mixer(components, BSR)
     return depth_of_anesthesia
+
+
+def load_mat_eeg(filename):
+    # Loads EEG data from a .mat file and returns it as a 1D NumPy array.
+    # Handles both standard and v7.3 (HDF5-based) .mat files.
+    
+    try:
+        # Try standard MATLAB format first
+        data = loadmat(filename)
+        eeg_key = next((k for k in data.keys() if not k.startswith('__')), None)
+        if eeg_key is None:
+            raise KeyError("No valid EEG variable found in .mat file.")
+        return np.asarray(data[eeg_key]).squeeze()
+
+    except NotImplementedError:
+        # Handle v7.3 (HDF5) format
+        with h5py.File(filename, 'r') as file:
+            eeg_key = next(iter(file.keys()))
+            return np.array(file[eeg_key]).squeeze()
+
 
 # Suppression function: Detects burst suppression and calculates BSR
 def suppression(eeg, Fs, stride):
@@ -158,3 +185,4 @@ def scurve(x, Eo, Emax, x50, xwidth):
 # Bound the values between a lower and upper bound
 def bound(x, lower, upper):
     return np.clip(x, lower, upper)
+
