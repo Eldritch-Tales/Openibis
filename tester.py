@@ -1,6 +1,6 @@
 import scipy.io
 import numpy as np
-from openibis import compute_depth_of_anesthesia  # Make sure openibis.py is in the same directory or installed as a module
+from openibis_python import openibis  # Make sure openibis_python.py is in the same directory or installed as a module
 
 def load_eeg_from_mat(filepath, variable_name='eeg'):
     """
@@ -14,10 +14,10 @@ def load_eeg_from_mat(filepath, variable_name='eeg'):
     return eeg.squeeze()  # Remove extra dimensions if present
 
 def main():
-    filepath = "/home/yourusername/Downloads/data.mat"  # Replace with your actual path
+    filepath = "/home/yourusername/upmc_work/openibis/Openibis/case18.mat" 
     eeg = load_eeg_from_mat(filepath)
     
-    doa = compute_depth_of_anesthesia(eeg)
+    doa = openibis(eeg)
     
     print("Depth of Anesthesia Scores:")
     print(doa)
