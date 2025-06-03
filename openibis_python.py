@@ -97,10 +97,6 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
 
         thirty_sec = time_range(30, n, stride)
 
-        # Checks if the thirty second index range is empty, skips current iteration if so
-        if len(thirty_sec) == 0 or np.isnan(psd[thirty_sec][:, mid_band]).all():
-            continue  # skip this epoch
-
         try:
             vhigh_band = band_range(39.5, 46.5, 0.5)
             vhigh_band_alt = band_range(40, 47, 0.5)
@@ -108,6 +104,10 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
             whole_band_alt = band_range(1, 47, 0.5)
             mid_band = band_range(11, 20, 0.5)
 
+            # Checks if the thirty second index range is empty, skips current iteration if so
+            if len(thirty_sec) == 0 or np.isnan(psd[thirty_sec][:, mid_band]).all():
+                continue  # skip this epoch
+            
             vhigh = np.sqrt(np.mean(psd[thirty_sec][:, vhigh_band] * psd[thirty_sec][:, vhigh_band_alt], axis=1))
             whole = np.sqrt(np.mean(psd[thirty_sec][:, whole_band] * psd[thirty_sec][:, whole_band_alt], axis=1))
             mid_power = prctmean(np.nanmean(10 * np.log10(psd[thirty_sec][:, mid_band]), axis=0), 50, 100)
