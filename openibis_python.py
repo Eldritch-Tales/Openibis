@@ -107,7 +107,7 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
             # Checks if the thirty second index range is empty, skips current iteration if so
             if len(thirty_sec) == 0 or np.isnan(psd[thirty_sec][:, mid_band]).all():
                 continue  # skip this epoch
-            
+
             vhigh = np.sqrt(np.mean(psd[thirty_sec][:, vhigh_band] * psd[thirty_sec][:, vhigh_band_alt], axis=1))
             whole = np.sqrt(np.mean(psd[thirty_sec][:, whole_band] * psd[thirty_sec][:, whole_band_alt], axis=1))
             mid_power = prctmean(np.nanmean(10 * np.log10(psd[thirty_sec][:, mid_band]), axis=0), 50, 100)
@@ -144,6 +144,11 @@ def sawtooth_detector(eeg, n_stride):
     conv2 = np.convolve(eeg, saw, mode='valid')
     m = (np.stack([conv1, conv2]) / len(saw))**2
 
+    print("v:", v)
+    print("m:", m)
+    print("shapes - v:", v.shape, "m:", m.shape)
+
+    v = np.where((v == 0) | np.isnan(v), np.nan, v)
     m_ratio = np.maximum((v > 10) * m[0] / v, (v > 10) * m[1] / v)
     return np.max(m_ratio) > 0.63
 
