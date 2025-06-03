@@ -111,7 +111,7 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
             psd[n, :] = power_spectral_density(seg_hi)
 
             seg_raw = segment(eeg, n + 4, 4, n_stride)
-            if sawtooth_detector(seg_raw, n_stride):
+            if not sawtooth_detector(seg_raw, n_stride):
                 print(f"Epoch {n}: computing PSD with suppression")
                 psd[n, :] *= suppression_filter
             else:
