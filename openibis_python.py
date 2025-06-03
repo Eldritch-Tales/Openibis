@@ -9,6 +9,7 @@ from scipy.stats import trim_mean
 from scipy.ndimage import uniform_filter1d
 from scipy.io import loadmat
 import math
+import h5py
 
 # Main function: openibis
 def openibis(eeg_input):
