@@ -23,5 +23,5 @@ def main():
     print(doa)
 
 print(__name__)
-if __name__ == "__tester__":
+if __name__ == "__main__":
     main()
