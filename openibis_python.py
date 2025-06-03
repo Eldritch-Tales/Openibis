@@ -182,6 +182,9 @@ def band_range(low, high, binsize):
 def mean_band_power(psd, fmin, fmax, bin_width):
     band = band_range(fmin, fmax, bin_width)
     v = psd[:, band]
+    print("PSD shape:", psd.shape)
+    print("Sample PSD slice:", psd[0, :10])
+    print("NaNs in PSD:", np.isnan(psd).sum())
     if np.isnan(v).all():
         return np.nan
     return np.nanmean(10 * np.log10(v + 1e-8))
