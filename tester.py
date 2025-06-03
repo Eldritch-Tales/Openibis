@@ -18,7 +18,8 @@ def main():
     # eeg = load_eeg_from_mat(filepath)
     
     doa = openibis(filepath)
-    
+    doa = np.nan_to_num(doa, nan=0.0, posinf=0.0, neginf=0.0)
+
     print("Depth of Anesthesia Scores:")
     print(doa)
 

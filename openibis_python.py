@@ -110,10 +110,10 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
 
             vhigh = np.sqrt(np.mean(psd[thirty_sec][:, vhigh_band] * psd[thirty_sec][:, vhigh_band_alt], axis=1))
             whole = np.sqrt(np.mean(psd[thirty_sec][:, whole_band] * psd[thirty_sec][:, whole_band_alt], axis=1))
-            mid_power = prctmean(np.nanmean(10 * np.log10(psd[thirty_sec][:, mid_band]), axis=0), 50, 100)
+            mid_power = prctmean(np.nanmean(10 * np.log10(np.maximum(psd[thirty_sec][:, mid_band], 1e-8)), axis=0), 50, 100)
 
             components[n, 0] = mean_band_power(psd[thirty_sec], 30, 47, 0.5) - mid_power
-            components[n, 1] = trim_mean(10 * np.log10(vhigh / whole), 0.5)
+            components[n, 1] = trim_mean(10 * np.log10(np.maximum(vhigh / whole), 1e-8), 0.5)
             components[n, 2] = mean_band_power(psd[thirty_sec], 0.5, 4, 0.5) - mid_power
         except:
             pass  # Handle NaNs or range issues gracefully
