@@ -19,9 +19,21 @@ def openibis(eeg_input):
     else:
         eeg = np.asarray(eeg_input).squeeze()
 
+    # Check to see if eeg data is empty
+    print("EEG summary:", np.min(eeg), np.max(eeg), np.mean(eeg), np.std(eeg))
+
     Fs, stride = 128, 0.5
     BSRmap, BSR = suppression(eeg, Fs, stride)
+
+    # Checks first 10 BSR
+    print("BSR:", BSR[:10])
+    print("BSRmap shape:", BSRmap.shape)
+
     components = log_power_ratios(eeg, Fs, stride, BSRmap)
+
+    # Prints first 10 log power ratios
+    print("Log power ratio components (first 10):", components[:10])
+
     depth_of_anesthesia = mixer(components, BSR)
     return depth_of_anesthesia
 
