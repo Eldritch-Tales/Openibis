@@ -22,5 +22,6 @@ def main():
     print("Depth of Anesthesia Scores:")
     print(doa)
 
+print(__name__)
 if __name__ == "__tester__":
     main()
