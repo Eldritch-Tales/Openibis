@@ -15,9 +15,9 @@ def load_eeg_from_mat(filepath, variable_name='eeg'):
 
 def main():
     filepath = "/home/sriram/upmc_work/openibis/Openibis/case18.mat" 
-    eeg = load_eeg_from_mat(filepath)
+    # eeg = load_eeg_from_mat(filepath)
     
-    doa = openibis(eeg)
+    doa = openibis(filepath)
     
     print("Depth of Anesthesia Scores:")
     print(doa)
