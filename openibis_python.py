@@ -99,13 +99,25 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
     suppression_filter = piecewise(np.arange(0, 64, 0.5), [0, 3, 6], [0, 0.25, 1]) ** 2
     components = np.full((N, 3), np.nan)
 
+    test_seg = segment(eeg_hi, 10, 4, n_stride)
+    print("Test segment mean/std:", np.mean(test_seg), np.std(test_seg))
+    test_psd = power_spectral_density(test_seg)
+    print("Test PSD output:", test_psd[:10])  # first 10 values
+    print("Any NaNs in test PSD?", np.isnan(test_psd).any())
+
     for n in range(N):
         if is_not_burst_suppressed(BSRmap, n, 4):
-            seg = segment(eeg_hi, n + 4, 4, n_stride)
-            psd[n, :] = power_spectral_density(seg)
+            seg_hi = segment(eeg_hi, n + 4, 4, n_stride)
+            psd[n, :] = power_spectral_density(seg_hi)
 
-            if sawtooth_detector(segment(eeg, n + 4, 4, n_stride), n_stride):
+            seg_raw = segment(eeg, n + 4, 4, n_stride)
+            if sawtooth_detector(seg_raw, n_stride):
+                print(f"Epoch {n}: computing PSD with suppression")
                 psd[n, :] *= suppression_filter
+            else:
+                print(f"Epoch {n}: Sawtooth Detector Failed")
+        else:
+            print(f"Epoch {n}: Burst suppressed - skipping PSD computation")
 
         thirty_sec = time_range(30, n, stride)
 
