@@ -128,12 +128,28 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
             if len(thirty_sec) == 0 or np.isnan(psd[thirty_sec][:, mid_band]).all():
                 continue  # skip this epoch
 
-            vhigh = np.sqrt(np.mean(psd[thirty_sec][:, vhigh_band] * psd[thirty_sec][:, vhigh_band_alt], axis=1))
-            whole = np.sqrt(np.mean(psd[thirty_sec][:, whole_band] * psd[thirty_sec][:, whole_band_alt], axis=1))
+            # Ensure PSD slices are arrays
+            vhigh_slice1 = np.asarray(psd[thirty_sec][:, vhigh_band])
+            vhigh_slice2 = np.asarray(psd[thirty_sec][:, vhigh_band_alt])
+            whole_slice1 = np.asarray(psd[thirty_sec][:, whole_band])
+            whole_slice2 = np.asarray(psd[thirty_sec][:, whole_band_alt])
+
+            # Defensive checks
+            if vhigh_slice1.shape != vhigh_slice2.shape or whole_slice1.shape != whole_slice2.shape:
+                raise ValueError(f"Mismatched PSD slice shapes: {vhigh_slice1.shape} vs {vhigh_slice2.shape}")
+
+            # Compute geometric means safely
+            vhigh = np.sqrt(np.mean(vhigh_slice1 * vhigh_slice2, axis=1))
+            whole = np.sqrt(np.mean(whole_slice1 * whole_slice2, axis=1))
+
+            # Safe ratio with divide
+            ratio = np.divide(vhigh, whole, out=np.full_like(vhigh, np.nan), where=whole != 0)
+            safe_ratio = np.maximum(ratio, 1e-8)
+            
             mid_power = prctmean(np.nanmean(10 * np.log10(np.maximum(psd[thirty_sec][:, mid_band], 1e-8)), axis=0), 50, 100)
 
             components[n, 0] = mean_band_power(psd[thirty_sec], 30, 47, 0.5) - mid_power
-            components[n, 1] = trim_mean(10 * np.log10(np.maximum(vhigh / whole, 1e-8), 0.5))
+            components[n, 1] = trim_mean(10 * np.log10(safe_ratio), 0.5)
             components[n, 2] = mean_band_power(psd[thirty_sec], 0.5, 4, 0.5) - mid_power
         except Exception as e:
             print(f"Exception in epoch {n}: {e}")
