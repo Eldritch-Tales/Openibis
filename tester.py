@@ -14,7 +14,7 @@ def load_eeg_from_mat(filepath, variable_name='eeg'):
     return eeg.squeeze()  # Remove extra dimensions if present
 
 def main():
-    filepath = "/home/upmc_work/openibis/Openibis/case18.mat" 
+    filepath = "/home/sriram/upmc_work/openibis/Openibis/case18.mat" 
     eeg = load_eeg_from_mat(filepath)
     
     doa = openibis(eeg)
