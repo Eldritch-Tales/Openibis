@@ -20,7 +20,7 @@ def openibis(eeg_input):
         eeg = np.asarray(eeg_input).squeeze()
 
     # Check to see if eeg data is empty
-    print("EEG summary:", np.min(eeg), np.max(eeg), np.mean(eeg), np.std(eeg))
+    print("EEG max/min/mean/std:", np.min(eeg), np.max(eeg), np.mean(eeg), np.std(eeg))
 
     Fs, stride = 128, 0.5
     BSRmap, BSR = suppression(eeg, Fs, stride)
