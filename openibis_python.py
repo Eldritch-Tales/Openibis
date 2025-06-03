@@ -10,6 +10,13 @@ from scipy.ndimage import uniform_filter1d
 # from scipy.io import loadmat
 import math
 import h5py
+import matplotlib.pyplot as plt
+
+plt.plot(suppression_mask)
+plt.title("Suppression Mask Over Time")
+plt.xlabel("Epoch index")
+plt.ylabel("Suppressed (1) or Not (0)")
+plt.show()
 
 # Main function: openibis
 def openibis(eeg_input):
