@@ -42,7 +42,6 @@ def load_mat_eeg(filename):
             eeg_key = next(iter(file.keys()))
             return np.array(file[eeg_key]).squeeze()
 
-
 # Suppression function: Detects burst suppression and calculates BSR
 def suppression(eeg, Fs, stride):
     N, n_stride = n_epochs(eeg, Fs, stride)
@@ -51,8 +50,14 @@ def suppression(eeg, Fs, stride):
         x = segment(eeg, n + 6.5, 2, n_stride)
         BSRmap[n] = np.all(np.abs(x - baseline(x)) <= 5)
     window = int(63 / stride)
-    BSR = 100 * uniform_filter1d(BSRmap, size=window, origin=-(window - 1))
+    BSR = 100 * causal_moving_average(BSRmap, window)
     return BSRmap, BSR
+
+def causal_moving_average(x, window_size):
+    # Pad the left side with zeros to maintain alignment (like MATLAB's movmean(..., [M 0]))
+    padded = np.pad(x, (window_size - 1, 0), mode='constant', constant_values=0)
+    smoothed = uniform_filter1d(padded, size=window_size, origin=0)[(window_size - 1):]
+    return smoothed
 
 # Calculate the number of epochs
 def n_epochs(eeg, Fs, stride):
