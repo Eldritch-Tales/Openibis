@@ -96,6 +96,11 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
                 psd[n, :] *= suppression_filter
 
         thirty_sec = time_range(30, n, stride)
+
+        # Checks if the thirty second index range is empty, skips current iteration if so
+        if len(thirty_sec) == 0 or np.isnan(psd[thirty_sec][:, mid_band]).all():
+            continue  # skip this epoch
+
         try:
             vhigh_band = band_range(39.5, 46.5, 0.5)
             vhigh_band_alt = band_range(40, 47, 0.5)
@@ -126,21 +131,32 @@ def power_spectral_density(x):
 def sawtooth_detector(eeg, n_stride):
     saw = np.concatenate([np.zeros(n_stride - 5), np.arange(1, 6)])
     saw = (saw - np.mean(saw)) / np.std(saw, ddof=1)
-    r = np.arange(len(eeg) - len(saw))
-    v = np.array([np.var(eeg[i:i+len(saw)]) for i in r])
-    conv1 = fftconvolve(eeg, saw[::-1], mode='valid')
-    conv2 = fftconvolve(eeg, saw, mode='valid')
-    m = (np.vstack((conv1, conv2)) / len(saw))**2
-    test = np.maximum((v > 10) * m[0] / v, (v > 10) * m[1] / v)
-    return np.any(test > 0.63)
+    
+    # Valid convolution length = len(eeg) - len(saw) + 1
+    conv_len = len(eeg) - len(saw) + 1
+    if conv_len <= 0:
+        return False  # Can't apply detector if EEG segment is too short
+
+    r = np.arange(conv_len)
+    v = np.array([np.var(eeg[i:i+len(saw)], ddof=1) for i in r])
+
+    conv1 = np.convolve(eeg, saw[::-1], mode='valid')
+    conv2 = np.convolve(eeg, saw, mode='valid')
+    m = (np.stack([conv1, conv2]) / len(saw))**2
+
+    m_ratio = np.maximum((v > 10) * m[0] / v, (v > 10) * m[1] / v)
+    return np.max(m_ratio) > 0.63
 
 # Band range for frequency bands
 def band_range(low, high, binsize):
     return np.arange(int(low / binsize), int(high / binsize) + 1)
 
 # Mean power in a frequency band
-def mean_band_power(psd, low, high, binsize):
-    v = psd[:, band_range(low, high, binsize)]
+def mean_band_power(psd, fmin, fmax, bin_width):
+    band = band_range(fmin, fmax, bin_width)
+    v = psd[:, band]
+    if np.isnan(v).all():
+        return np.nan
     return np.nanmean(10 * np.log10(v + 1e-8))
 
 # Check if an epoch is burst-suppressed
