@@ -34,7 +34,7 @@ def openibis(eeg_input):
     plt.ylabel("Score")
     plt.title("EEG Over Time")
     plt.grid(True)
-    plt.ylim(0, 100)
+    plt.ylim(-125.0, 125.0)
     plt.legend()
     plt.tight_layout()
     plt.show()
