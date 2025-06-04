@@ -182,9 +182,9 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
             
             mid_power = prctmean(np.nanmean(10 * np.log10(np.maximum(psd[thirty_sec][:, mid_band], 1e-8)), axis=0), 50, 100)
 
-            components[n, 0] = mean_band_power(psd[thirty_sec[n]], 30, 47, 0.5) - mid_power
+            components[n, 0] = mean_band_power(psd[thirty_sec], 30, 47, 0.5) - mid_power
             components[n, 1] = trim_mean(10 * np.log10(safe_ratio), 0.5)
-            components[n, 2] = mean_band_power(psd[thirty_sec[n]], 0.5, 4, 0.5) - mid_power
+            components[n, 2] = mean_band_power(psd[thirty_sec], 0.5, 4, 0.5) - mid_power
         except Exception as e:
             print(f"Exception in epoch {n}: {e}")
             pass  # Handle NaNs or range issues gracefully
