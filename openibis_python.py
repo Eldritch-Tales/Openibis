@@ -35,6 +35,10 @@ def openibis(eeg_input):
     # Prints first 10 log power ratios
     print("Log power ratio components (first 10):", components[:10])
 
+    print('=== DEBUG EPOCHS ===')
+    for i in range(5):
+        print(f'Epoch {i}: BSR={BSR[i]:.2f}, C0={components[i,0]:.2f}, C1={components[i,1]}, C2={components[i,2]:.2f}')
+
     depth_of_anesthesia = mixer(components, BSR)
 
 
@@ -116,12 +120,12 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
 
             seg_raw = segment(eeg, n + 4, 4, n_stride)
             if sawtooth_detector(seg_raw, n_stride):
-                print(f"Epoch {n}: computing PSD with suppression")
+                # print(f"Epoch {n}: computing PSD with suppression")
                 psd[n, :] *= suppression_filter
-            else:
-                print(f"Epoch {n}: Sawtooth Detector Failed")
-        else:
-            print(f"Epoch {n}: Burst suppressed - skipping PSD computation")
+            # else:
+                # print(f"Epoch {n}: Sawtooth Detector Failed")
+        # else:
+            # print(f"Epoch {n}: Burst suppressed - skipping PSD computation")
 
         thirty_sec = time_range(30, n, stride)
 
