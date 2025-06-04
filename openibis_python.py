@@ -99,10 +99,16 @@ def n_epochs(eeg, Fs, stride):
     return N, n_stride
 
 # Extract a segment of the EEG data
-def segment(eeg, start, number, n_stride):
-    start_index = int(start * n_stride)
-    end_index = start_index + int(number * n_stride)
-    return eeg[start_index:end_index]
+# def segment(eeg, start, number, n_stride):
+    # start_index = int(start * n_stride)
+    # end_index = start_index + int(number * n_stride)
+    # return eeg[start_index:end_index]
+
+def segment(eeg, fs, window_sec=30, step_sec=0.5):
+    window = int(window_sec * fs)
+    step = int(step_sec * fs)
+    return [eeg[i:i+window] for i in range(0, len(eeg) - window + 1, step)]
+
 
 # Baseline correction for EEG
 def baseline(x):
