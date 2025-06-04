@@ -14,7 +14,7 @@ def load_eeg_from_mat(filepath, variable_name='eeg'):
     return eeg.squeeze()  # Remove extra dimensions if present
 
 def main():
-    filepath = "/home/sriram/upmc_work/openibis/Openibis/case18.mat" 
+    filepath = "/home/sriram/upmc_work/openibis/Openibis/case7.mat" 
     # eeg = load_eeg_from_mat(filepath)
     
     doa = openibis(filepath)
@@ -23,6 +23,5 @@ def main():
     print("Depth of Anesthesia Scores:")
     print(doa)
 
-print(__name__)
 if __name__ == "__main__":
     main()
