@@ -142,10 +142,11 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
                 print("  thirty_sec range:", thirty_sec)
                 print("  mid_band indices:", mid_band)
                 print("  vhigh_band indices:", vhigh_band)
-                print("  Sample PSD slice at thirty_sec[0]:", psd[thirty_sec[0]][:10])
+                print("  Sample PSD slice at thirty_sec[0]:", psd[thirty_sec[n]][:10])
 
             # Checks if the thirty second index range is empty, skips current iteration if so
             if len(thirty_sec) == 0 or np.isnan(psd[thirty_sec][:, mid_band]).all():
+                print("Empty slice")
                 continue  # skip this epoch
 
             # Ensure PSD slices are arrays
