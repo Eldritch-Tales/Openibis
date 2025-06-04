@@ -1,6 +1,8 @@
 import scipy.io
 import numpy as np
 from openibis_python import openibis  # Make sure openibis_python.py is in the same directory or installed as a module
+import matplotlib.pyplot as plt
+
 
 def load_eeg_from_mat(filepath, variable_name='eeg'):
     """
@@ -22,6 +24,21 @@ def main():
 
     print("Depth of Anesthesia Scores:")
     print(doa)
+    Fs = 128
+    stride = 0.5  # from your code
+    time = np.arange(len(doa)) * stride
+
+    # Plot the depth of anesthesia
+    plt.figure(figsize=(12, 4))
+    plt.plot(time, doa, label="Depth of Anesthesia", color="blue")
+    plt.xlabel("Time (seconds)")
+    plt.ylabel("Score")
+    plt.title("Estimated Depth of Anesthesia Over Time")
+    plt.grid(True)
+    plt.ylim(0, 100)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
 
 if __name__ == "__main__":
     main()
