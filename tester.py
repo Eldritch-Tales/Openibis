@@ -74,5 +74,37 @@ def main():
     plt.tight_layout()
     plt.show()
 
+    # Create time axes
+    time_eeg = np.arange(len(eeg_data)) / 128  # 128 Hz
+    time_bis = np.linspace(0, time_eeg[-1], len(bis_data))
+    time_score = np.linspace(0, time_eeg[-1], len(doa))
+
+    # Set up plot
+    fig, ax1 = plt.subplots(figsize=(14, 6))
+
+    # EEG on left y-axis
+    ax1.plot(time_eeg, eeg_data.squeeze(), color='tab:blue', linewidth=0.5, label='EEG')
+    ax1.set_xlabel('Time (s)')
+    ax1.set_ylabel('EEG Amplitude', color='tab:blue')
+    ax1.tick_params(axis='y', labelcolor='tab:blue')
+
+    # BIS and Score on right y-axis
+    ax2 = ax1.twinx()
+
+    ax2.plot(time_bis, bis_data.squeeze(), color='tab:red', linewidth=2, label='BIS', alpha=0.7)
+    ax2.plot(time_score, doa.squeeze(), color='tab:green', linewidth=2, linestyle='--', label='Score', alpha=0.7)
+    ax2.set_ylabel('BIS / DOA Value', color='black')
+    ax2.tick_params(axis='y', labelcolor='black')
+    ax2.set_ylim(0, 100)
+
+    # Combine legends
+    lines_1, labels_1 = ax1.get_legend_handles_labels()
+    lines_2, labels_2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines_1 + lines_2, labels_1 + labels_2, loc='upper right')
+
+    plt.title("EEG, BIS, and DOA Over Time")
+    fig.tight_layout()
+    plt.show()
+
 if __name__ == "__main__":
     main()
