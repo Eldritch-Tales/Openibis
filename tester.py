@@ -23,8 +23,8 @@ def main():
     doa = openibis(filepath)
     doa = np.nan_to_num(doa, nan=0.0, posinf=0.0, neginf=0.0)
 
-    print("Depth of Anesthesia Scores:")
-    print(doa)
+    # print("Depth of Anesthesia Scores:")
+    # print(doa)
     Fs = 128
     stride = 0.5  # from your code
     time = np.arange(len(doa)) * stride
