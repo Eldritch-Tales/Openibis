@@ -26,22 +26,22 @@ def openibis(eeg_input):
     Fs, stride = 128, 0.5
     BSRmap, BSR = suppression(eeg, Fs, stride)
 
-    # time = np.arange(len(eeg)) * stride
-    #  # Plot the eeg data
-    # plt.figure(figsize=(12, 4))
-    # plt.plot(time, eeg, label="EEG", color="red")
-    # plt.xlabel("Time (seconds)")
-    # plt.ylabel("Score")
-    # plt.title("EEG Over Time")
-    # plt.grid(True)
-    # plt.ylim(-125.0, 125.0)
-    # plt.legend()
-    # plt.tight_layout()
-    # plt.show()
+    time = np.arange(len(eeg)) * stride
+     # Plot the eeg data
+    plt.figure(figsize=(12, 4))
+    plt.plot(time, eeg, label="EEG", color="red")
+    plt.xlabel("Time (seconds)")
+    plt.ylabel("Score")
+    plt.title("EEG Over Time")
+    plt.grid(True)
+    plt.ylim(-125.0, 125.0)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
     
     # Checks first 10 BSR
-    print("BSR:", BSR[:10])
-    print("BSRmap shape:", BSRmap.shape)
+    # print("BSR:", BSR[:10])
+    # print("BSRmap shape:", BSRmap.shape)
 
     # plt.plot(BSR)
     # plt.title("BSR over Time")
