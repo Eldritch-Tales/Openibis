@@ -15,10 +15,12 @@ import matplotlib.pyplot as plt
 # Main function: openibis
 def openibis(eeg_input):
     # --- Load EEG from .mat file if needed ---
-    if isinstance(eeg_input, str) and eeg_input.endswith('.mat'):
-        eeg = load_mat_eeg(eeg_input)
-    else:
-        eeg = np.asarray(eeg_input).squeeze()
+    # if isinstance(eeg_input, str) and eeg_input.endswith('.mat'):
+    #     eeg = load_mat_eeg(eeg_input)
+    # else:
+    #     eeg = np.asarray(eeg_input).squeeze()
+
+    eeg = np.asarray(eeg_input).squeeze()
 
     # Check to see if eeg data is empty
     # print("EEG max/min/mean/std:", np.min(eeg), np.max(eeg), np.mean(eeg), np.std(eeg))
@@ -27,17 +29,17 @@ def openibis(eeg_input):
     BSRmap, BSR = suppression(eeg, Fs, stride)
 
     time = np.arange(len(eeg)) * stride
-     # Plot the eeg data
-    plt.figure(figsize=(12, 4))
-    plt.plot(time, eeg, label="EEG", color="red")
-    plt.xlabel("Time (seconds)")
-    plt.ylabel("Score")
-    plt.title("EEG Over Time")
-    plt.grid(True)
-    plt.ylim(-125.0, 125.0)
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
+    # Plot the eeg data
+    # plt.figure(figsize=(12, 4))
+    # plt.plot(time, eeg, label="EEG", color="red")
+    # plt.xlabel("Time (seconds)")
+    # plt.ylabel("Score")
+    # plt.title("EEG Over Time")
+    # plt.grid(True)
+    # plt.ylim(-125.0, 125.0)
+    # plt.legend()
+    # plt.tight_layout()
+    # plt.show()
     
     # Checks first 10 BSR
     # print("BSR:", BSR[:10])
@@ -64,21 +66,21 @@ def openibis(eeg_input):
     return depth_of_anesthesia
 
 
-def load_mat_eeg(filename):
-    try:
-        # Try standard MATLAB format first
-        from scipy.io import loadmat
-        data = loadmat(filename)
-        eeg_key = next((k for k in data.keys() if not k.startswith('__')), None)
-        if eeg_key is None:
-            raise KeyError("No valid EEG variable found in .mat file.")
-        return np.asarray(data[eeg_key]).squeeze()
+# def load_mat_eeg(filename):
+#     try:
+#         # Try standard MATLAB format first
+#         from scipy.io import loadmat
+#         data = loadmat(filename)
+#         eeg_key = next((k for k in data.keys() if not k.startswith('__')), None)
+#         if eeg_key is None:
+#             raise KeyError("No valid EEG variable found in .mat file.")
+#         return np.asarray(data[eeg_key]).squeeze()
 
-    except NotImplementedError:
-        # Handle v7.3 (HDF5) format
-        with h5py.File(filename, 'r') as file:
-            eeg_key = next(iter(file.keys()))
-            return np.array(file[eeg_key]).squeeze()
+#     except NotImplementedError:
+#         # Handle v7.3 (HDF5) format
+#         with h5py.File(filename, 'r') as file:
+#             eeg_key = next(iter(file.keys()))
+#             return np.array(file[eeg_key]).squeeze()
 
 # Suppression function: Detects burst suppression and calculates BSR
 def suppression(eeg, Fs, stride):
