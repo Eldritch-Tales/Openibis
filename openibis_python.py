@@ -193,7 +193,13 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
             ratio = np.divide(vhigh, whole, out=np.full_like(vhigh, np.nan), where=whole != 0)
             safe_ratio = np.maximum(ratio, 1e-8)
             
-            mid_power = prctmean(np.nanmean(10 * np.log10(np.maximum(psd[thirty_sec][:, mid_band], 1e-8)), axis=0), 50, 100)
+            mid_psd_slice = psd[thirty_sec][:, mid_band]
+
+            if mid_psd_slice.size == 0 or np.isnan(mid_psd_slice).all():
+                print(f"Skipping epoch {n} due to empty or all-NaN mid_psd_slice")
+                continue  # Skip this epoch
+
+            mid_power = prctmean(np.nanmean(10 * np.log10(np.maximum(mid_psd_slice, 1e-8)), axis=0), 50, 100)
 
             components[n, 0] = mean_band_power(psd[thirty_sec], 30, 47, 0.5) - mid_power
             components[n, 1] = trim_mean(10 * np.log10(safe_ratio), 0.5)
