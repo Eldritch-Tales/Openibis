@@ -9,7 +9,6 @@ from scipy.stats import trim_mean
 from scipy.ndimage import uniform_filter1d
 # from scipy.io import loadmat
 import math
-import h5py
 import matplotlib.pyplot as plt
 
 # Main function: openibis
@@ -27,8 +26,15 @@ def openibis(eeg_input):
 
     depth_of_anesthesia = mixer(components, BSR)
 
+    # Plot the components against each other to diagnose issues
+    plt.figure(figsize=(10, 6))
+    plt.plot(components[:, 0], label='Component 0: sedation')
+    plt.plot(components[:, 1], label='Component 1: general')
+    plt.plot(components[:, 2], label='Component 2: bsr weight')
+    plt.title("DOA Components over Time")
+    plt.legend()
+    plt.show()
 
-    
     return depth_of_anesthesia
 
 def suppression(eeg, Fs, stride):
@@ -254,4 +260,3 @@ def scurve(x, Eo, Emax, x50, xwidth):
 # Bound the values between a lower and upper bound
 def bound(x, lower, upper):
     return np.clip(x, lower, upper)
-
