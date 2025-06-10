@@ -37,7 +37,7 @@ def load_mat_file(filepath):
         return data
 
 def main():
-    filepath = "/home/sriram/upmc_work/openibis/Openibis/case9.mat" 
+    filepath = "/home/sriram/upmc_work/openibis/Openibis/TestCases/case9.mat" 
 
     data = load_mat_file(filepath)
 
