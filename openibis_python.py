@@ -112,6 +112,13 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
             whole_slice1 = np.asarray(psd[thirty_sec][:, whole_band])
             whole_slice2 = np.asarray(psd[thirty_sec][:, whole_band_alt])
 
+            # Print slices for diagnostic purposes
+            print("Epoch", n)
+            print("vhigh_slice1:", np.nanmean(vhigh_slice1))
+            print("vhigh_slice2:", np.nanmean(vhigh_slice2))
+            print("whole_slice1:", np.nanmean(whole_slice1))
+            print("whole_slice2:", np.nanmean(whole_slice2))
+
             # Defensive checks
             if vhigh_slice1.shape != vhigh_slice2.shape or whole_slice1.shape != whole_slice2.shape:
                 raise ValueError(f"Mismatched PSD slice shapes: {vhigh_slice1.shape} vs {vhigh_slice2.shape}")
@@ -123,6 +130,10 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
             # Safe ratio with divide
             ratio = np.divide(vhigh, whole, out=np.full_like(vhigh, np.nan), where=whole != 0)
             safe_ratio = np.maximum(ratio, 1e-8)
+
+            # Diagnostic Print of Ratio and Log10(Ratio)
+            print("ratio mean:", ratio)
+            print("log10(ratio):", np.log10(ratio))
             
             mid_psd_slice = psd[thirty_sec][:, mid_band]
 
