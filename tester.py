@@ -20,7 +20,7 @@ def load_mat_file(filepath):
     
     except NotImplementedError:
         # Fall back to h5py (for MATLAB v7.3 HDF5 files)
-        print("Falling back to h5py (HDF5 format)...")
+        # print("Falling back to h5py (HDF5 format)...")
         data = {}
         with h5py.File(filepath, 'r') as f:
             def recursively_load(h5obj):
@@ -66,7 +66,7 @@ def main():
     plt.figure(figsize=(12, 4))
     plt.plot(time, doa, label="Depth of Anesthesia", color="blue")
     plt.xlabel("Time (seconds)")
-    plt.ylabel("Score")
+    plt.ylabel("DOA Score")
     plt.title("Estimated Depth of Anesthesia Over Time")
     plt.grid(True)
     plt.ylim(0, 100)
@@ -75,24 +75,26 @@ def main():
     plt.show()
 
     # Create time axes
-    time_eeg = np.arange(len(eeg_data)) / 128  # 128 Hz
-    time_bis = np.linspace(0, time_eeg[-1], len(bis_data))
-    time_score = np.linspace(0, time_eeg[-1], len(doa))
+    eeg = eeg_data.squeeze()
+    time_eeg = np.arange(len(eeg)) / 128  # 128 Hz
+    bis = bis_data.squeeze()
+    time_bis = np.linspace(0, time_eeg[-1], len(bis))
+    time_doa = np.linspace(0, time_eeg[-1], len(doa))
 
     # Set up plot
     fig, ax1 = plt.subplots(figsize=(14, 6))
 
     # EEG on left y-axis
-    ax1.plot(time_eeg, eeg_data.squeeze(), color='tab:blue', linewidth=0.5, label='EEG')
+    ax1.plot(time_eeg, eeg, color='tab:blue', linewidth=0.5, label='EEG')
     ax1.set_xlabel('Time (s)')
     ax1.set_ylabel('EEG Amplitude', color='tab:blue')
     ax1.tick_params(axis='y', labelcolor='tab:blue')
 
-    # BIS and Score on right y-axis
+    # BIS and Depth of Anesthesia on right y-axis
     ax2 = ax1.twinx()
 
-    ax2.plot(time_bis, bis_data.squeeze(), color='tab:red', linewidth=2, label='BIS', alpha=0.7)
-    ax2.plot(time_score, doa.squeeze(), color='tab:green', linewidth=2, linestyle='--', label='Score', alpha=0.7)
+    ax2.plot(time_bis, bis, color='tab:red', linewidth=2, label='BIS', alpha=0.7)
+    ax2.plot(time_doa, doa.squeeze(), color='tab:green', linewidth=2, linestyle='--', label='DOA', alpha=0.7)
     ax2.set_ylabel('BIS / DOA Value', color='black')
     ax2.tick_params(axis='y', labelcolor='black')
     ax2.set_ylim(0, 100)
