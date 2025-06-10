@@ -58,21 +58,21 @@ def main():
 
     # print("Depth of Anesthesia Scores:")
     # print(doa)
-    Fs = 128
-    stride = 0.5 
-    time = np.arange(len(doa)) * stride
+    # Fs = 128
+    # stride = 0.5 
+    # time = np.arange(len(doa)) * stride
 
     # Plot the depth of anesthesia
-    plt.figure(figsize=(12, 4))
-    plt.plot(time, doa, label="Depth of Anesthesia", color="blue")
-    plt.xlabel("Time (seconds)")
-    plt.ylabel("DOA Score")
-    plt.title("Estimated Depth of Anesthesia Over Time")
-    plt.grid(True)
-    plt.ylim(0, 100)
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
+    # plt.figure(figsize=(12, 4))
+    # plt.plot(time, doa, label="Depth of Anesthesia", color="blue")
+    # plt.xlabel("Time (seconds)")
+    # plt.ylabel("DOA Score")
+    # plt.title("Estimated Depth of Anesthesia Over Time")
+    # plt.grid(True)
+    # plt.ylim(0, 100)
+    # plt.legend()
+    # plt.tight_layout()
+    # plt.show()
 
     # Create time axes
     eeg = eeg_data.squeeze()
