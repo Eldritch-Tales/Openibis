@@ -14,50 +14,16 @@ import matplotlib.pyplot as plt
 
 # Main function: openibis
 def openibis(eeg_input):
-    # --- Load EEG from .mat file if needed ---
-    # if isinstance(eeg_input, str) and eeg_input.endswith('.mat'):
-    #     eeg = load_mat_eeg(eeg_input)
-    # else:
-    #     eeg = np.asarray(eeg_input).squeeze()
 
     eeg = np.asarray(eeg_input).squeeze()
-
-    # Check to see if eeg data is empty
-    # print("EEG max/min/mean/std:", np.min(eeg), np.max(eeg), np.mean(eeg), np.std(eeg))
 
     Fs, stride = 128, 0.5
     BSRmap, BSR = suppression(eeg, Fs, stride)
 
     time = np.arange(len(eeg)) * stride
-    # Plot the eeg data
-    # plt.figure(figsize=(12, 4))
-    # plt.plot(time, eeg, label="EEG", color="red")
-    # plt.xlabel("Time (seconds)")
-    # plt.ylabel("Score")
-    # plt.title("EEG Over Time")
-    # plt.grid(True)
-    # plt.ylim(-125.0, 125.0)
-    # plt.legend()
-    # plt.tight_layout()
-    # plt.show()
-    
-    # Checks first 10 BSR
-    # print("BSR:", BSR[:10])
-    # print("BSRmap shape:", BSRmap.shape)
-
-    # plt.plot(BSR)
-    # plt.title("BSR over Time")
-    # plt.show()
 
     components = log_power_ratios(eeg, Fs, stride, BSRmap)
     components = np.nan_to_num(components, nan=0.0)
-
-    # Prints first 10 log power ratios
-    # print("Log power ratio components (first 10):", components[:10])
-
-    # print('=== DEBUG EPOCHS ===')
-    # for i in range(5):
-    #     print(f'Epoch {i}: BSR={BSR[i]:.2f}, C0={components[i,0]:.2f}, C1={components[i,1]}, C2={components[i,2]:.2f}')
 
     depth_of_anesthesia = mixer(components, BSR)
 
@@ -65,24 +31,6 @@ def openibis(eeg_input):
     
     return depth_of_anesthesia
 
-
-# def load_mat_eeg(filename):
-#     try:
-#         # Try standard MATLAB format first
-#         from scipy.io import loadmat
-#         data = loadmat(filename)
-#         eeg_key = next((k for k in data.keys() if not k.startswith('__')), None)
-#         if eeg_key is None:
-#             raise KeyError("No valid EEG variable found in .mat file.")
-#         return np.asarray(data[eeg_key]).squeeze()
-
-#     except NotImplementedError:
-#         # Handle v7.3 (HDF5) format
-#         with h5py.File(filename, 'r') as file:
-#             eeg_key = next(iter(file.keys()))
-#             return np.array(file[eeg_key]).squeeze()
-
-# Suppression function: Detects burst suppression and calculates BSR
 def suppression(eeg, Fs, stride):
     N, n_stride = n_epochs(eeg, Fs, stride)
     BSRmap = np.zeros(N)
@@ -113,12 +61,6 @@ def segment(eeg, start, number, n_stride):
         return np.array([])  # or pad with zeros
     return eeg[start_index:end_index]
 
-# def segment(eeg, fs, window_sec=30, step_sec=0.5):
-#     window = int(window_sec * fs)
-#     step = int(step_sec * fs)
-#     return [eeg[i:i+window] for i in range(0, len(eeg) - window + 1, step)]
-
-
 # Baseline correction for EEG
 def baseline(x):
     v = np.vstack([np.arange(1, len(x) + 1)**p for p in range(2)]).T
@@ -135,12 +77,6 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
     suppression_filter = piecewise(np.arange(0, 64, 0.5), [0, 3, 6], [0, 0.25, 1]) ** 2
     components = np.full((N, 3), np.nan)
 
-    test_seg = segment(eeg_hi, 10, 4, n_stride)
-    # print("Test segment mean/std:", np.mean(test_seg), np.std(test_seg))
-    test_psd = power_spectral_density(test_seg)
-    # print("Test PSD output:", test_psd[:10])  # first 10 values
-    # print("Any NaNs in test PSD?", np.isnan(test_psd).any())
-
     for n in range(N):
         if is_not_burst_suppressed(BSRmap, n, 4):
             seg_hi = segment(eeg_hi, n + 4, 4, n_stride)
@@ -148,12 +84,7 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
 
             seg_raw = segment(eeg, n + 4, 4, n_stride)
             if sawtooth_detector(seg_raw, n_stride):
-                # print(f"Epoch {n}: computing PSD with suppression")
                 psd[n, :] *= suppression_filter
-            # else:
-                # print(f"Epoch {n}: Sawtooth Detector Failed")
-        # else:
-            # print(f"Epoch {n}: Burst suppressed - skipping PSD computation")
 
         thirty_sec = time_range(30, n, stride)
 
@@ -163,14 +94,6 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
             whole_band = band_range(0.5, 46.5, 0.5)
             whole_band_alt = band_range(1, 47, 0.5)
             mid_band = band_range(11, 20, 0.5)
-
-            # if n < 5:  # only print for first few epochs to reduce spam
-            #     print(f"\nEpoch {n}")
-            #     print("  PSD shape:", psd.shape)
-            #     print("  thirty_sec range:", thirty_sec)
-            #     print("  mid_band indices:", mid_band)
-            #     print("  vhigh_band indices:", vhigh_band)
-            #     print(f"  Sample PSD slice at thirty_sec[{n}]:", psd[thirty_sec[n]][:10])
 
             # Checks if the thirty second index range is empty, skips current iteration if so
             if len(thirty_sec) == 0 or np.isnan(psd[thirty_sec][:, mid_band]).all():
