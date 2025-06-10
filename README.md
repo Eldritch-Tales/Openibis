@@ -1,6 +1,6 @@
 **About**
 
-This project contains a python adaptation of the openibis algorithm used to calculate the Depth of Anesthesia using EEG data as an input. This program will output a Depth of Anesthesia score (0-100) as the return value.
+This project contains a python adaptation of the openibis algorithm used to calculate the Depth of Anesthesia using EEG data as an input. This program will output a graph of the Depth of Anesthesia score (0-100) compared to the input EEG (and optionally BIS) data as the return value.
 
 
 **Citation**
