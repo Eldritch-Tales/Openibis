@@ -95,7 +95,8 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
         thirty_sec = time_range(30, n, stride)
 
         try:
-            vhigh_band = band_range(39.5, 46.5, 0.5)
+            # vhigh_band = band_range(39.5, 46.5, 0.5)
+            vhigh_band = band_range(30, 37, 0.5)
             vhigh_band_alt = band_range(40, 47, 0.5)
             whole_band = band_range(0.5, 46.5, 0.5)
             whole_band_alt = band_range(1, 47, 0.5)
@@ -157,14 +158,14 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
             print(f"Exception in epoch {n}: {e}")
             pass  # Handle NaNs or range issues gracefully
 
-        plt.plot(10 * np.log10(psd[n, :]))
+        # plt.plot(10 * np.log10(psd[n, :]))
 
-        plt.plot(vhigh, label="vhigh")
-        plt.plot(whole, label="whole")
-        plt.plot(10 * np.log10(np.maximum(vhigh / whole, 1e-8)), label="log-ratio")
-        plt.legend()
-        plt.title("Component 1 inputs")
-        plt.show()
+        # plt.plot(vhigh, label="vhigh")
+        # plt.plot(whole, label="whole")
+        # plt.plot(10 * np.log10(np.maximum(vhigh / whole, 1e-8)), label="log-ratio")
+        # plt.legend()
+        # plt.title("Component 1 inputs")
+        # plt.show()
 
     return components
 
