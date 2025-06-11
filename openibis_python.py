@@ -112,13 +112,6 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
             whole_slice1 = np.asarray(psd[thirty_sec][:, whole_band])
             whole_slice2 = np.asarray(psd[thirty_sec][:, whole_band_alt])
 
-            # Print slices for diagnostic purposes
-            print("Epoch", n)
-            print("vhigh_slice1:", np.nanmean(vhigh_slice1))
-            print("vhigh_slice2:", np.nanmean(vhigh_slice2))
-            print("whole_slice1:", np.nanmean(whole_slice1))
-            print("whole_slice2:", np.nanmean(whole_slice2))
-
             # Defensive checks
             if vhigh_slice1.shape != vhigh_slice2.shape or whole_slice1.shape != whole_slice2.shape:
                 raise ValueError(f"Mismatched PSD slice shapes: {vhigh_slice1.shape} vs {vhigh_slice2.shape}")
@@ -130,10 +123,17 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
             # Safe ratio with divide
             ratio = np.divide(vhigh, whole, out=np.full_like(vhigh, np.nan), where=whole != 0)
             safe_ratio = np.maximum(ratio, 1e-8)
+            log_ratios = 10 * np.log10(safe_ratio)
 
-            # Diagnostic Print of Ratio and Log10(Ratio)
-            print("ratio mean:", ratio)
-            print("log10(ratio):", np.log10(ratio))
+            # DEBUG: Print diagnostic info for component[1]
+            if n%100 == 0:
+                print(f"\nEpoch {n}")
+                print(f"vhigh_slice1 mean: {np.nanmean(vhigh_slice1):.4f}")
+                print(f"vhigh_slice2 mean: {np.nanmean(vhigh_slice2):.4f}")
+                print(f"whole_slice1 mean: {np.nanmean(whole_slice1):.4f}")
+                print(f"whole_slice2 mean: {np.nanmean(whole_slice2):.4f}")
+                print(f"ratio mean: {np.nanmean(ratio):.4f}")
+                print(f"log10(ratio): {np.nanmean(10 * np.log10(np.maximum(ratio, 1e-8))):.2f} dB")
             
             mid_psd_slice = psd[thirty_sec][:, mid_band]
 
@@ -144,11 +144,25 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
             mid_power = prctmean(np.nanmean(10 * np.log10(np.maximum(mid_psd_slice, 1e-8)), axis=0), 50, 100)
 
             components[n, 0] = mean_band_power(psd[thirty_sec], 30, 47, 0.5) - mid_power
-            components[n, 1] = trim_mean(10 * np.log10(safe_ratio), 0.5)
+
+            # Avoid trim_mean if too few values
+            if log_ratios.size >= 2:
+                components[n, 1] = trim_mean(log_ratios, 0.5)
+            else:
+                components[n, 1] = np.nanmean(log_ratios)
+                        
             components[n, 2] = mean_band_power(psd[thirty_sec], 0.5, 4, 0.5) - mid_power
+
         except Exception as e:
             print(f"Exception in epoch {n}: {e}")
             pass  # Handle NaNs or range issues gracefully
+
+        plt.plot(vhigh, label="vhigh")
+        plt.plot(whole, label="whole")
+        plt.plot(10 * np.log10(np.maximum(vhigh / whole, 1e-8)), label="log-ratio")
+        plt.legend()
+        plt.title("Component 1 inputs")
+        plt.show()
 
     return components
 
