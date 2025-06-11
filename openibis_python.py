@@ -157,6 +157,8 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
             print(f"Exception in epoch {n}: {e}")
             pass  # Handle NaNs or range issues gracefully
 
+        plt.plot(10 * np.log10(psd[n, :]))
+
         plt.plot(vhigh, label="vhigh")
         plt.plot(whole, label="whole")
         plt.plot(10 * np.log10(np.maximum(vhigh / whole, 1e-8)), label="log-ratio")
@@ -211,7 +213,7 @@ def sawtooth_detector(eeg, n_stride):
 
 # Band range for frequency bands
 def band_range(low, high, binsize):
-    return np.arange(int(low / binsize), int(high / binsize) + 1) + 1
+    return np.arange(int(low / binsize), int(high / binsize) + 1)
 
 # Mean power in a frequency band
 def mean_band_power(psd, fmin, fmax, bin_width):
