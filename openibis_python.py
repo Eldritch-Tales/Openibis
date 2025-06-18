@@ -65,9 +65,11 @@ def n_epochs(eeg, Fs, stride):
 # Extract a segment of the EEG data
 def segment(eeg, start, number, n_stride):
     start_index = int(round(start * n_stride))
-    end_index = start_index + int(number * n_stride)
+    end_index = start_index + int(round(number * n_stride))
+    print(f"Segment: start={start}, n_stride={n_stride}, start_index={start_index}, end_index={end_index}, len(eeg)={len(eeg)}")
     if end_index > len(eeg):
-        return np.array([])  # or pad with zeros
+        print("Returning empty segment!")
+        return np.array([])
     return eeg[start_index:end_index]
 
 # Baseline correction for EEG
@@ -115,6 +117,12 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
             if len(thirty_sec) == 0 or np.isnan(psd[thirty_sec][:, mid_band]).all():
                 print(f"Epoch {n}: Empty slice")
                 continue  # skip this epoch
+
+            if np.isnan(psd[thirty_sec][:, vhigh_band]).all():
+                print(f"Epoch {n}: vhigh_band slice all NaN, thirty_sec={thirty_sec}, vhigh_band={vhigh_band}")
+            if np.isnan(psd[thirty_sec][:, whole_band]).all():
+                print(f"Epoch {n}: whole_band slice all NaN, thirty_sec={thirty_sec}, whole_band={whole_band}")
+            # print(f"psd[thirty_sec].shape={psd[thirty_sec].shape}")
 
             # Ensure PSD slices are arrays
             vhigh_slice1 = np.asarray(psd[thirty_sec][:, vhigh_band])
