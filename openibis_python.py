@@ -104,6 +104,9 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
             else:
                 valid_count += 1
 
+            # Checking to see if psd is faulty
+            print(f"Epoch {n}: PSD min={np.nanmin(psd[n])}, max={np.nanmax(psd[n])}")
+
         thirty_sec = time_range(30, n, stride)
 
         try:
@@ -113,15 +116,18 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
             whole_band_alt = band_range(1, 47, 0.5)
             mid_band = band_range(11, 20, 0.5)
 
+            # Checking to see if bounds match psd shape
+            print(f"PSD shape: {psd.shape}, vhigh_band: {vhigh_band}, whole_band: {whole_band}")
+
             # Checks if the thirty second index range is empty, skips current iteration if so
             if len(thirty_sec) == 0 or np.isnan(psd[thirty_sec][:, mid_band]).all():
                 print(f"Epoch {n}: Empty slice")
                 continue  # skip this epoch
 
-            if np.isnan(psd[thirty_sec][:, vhigh_band]).all():
-                print(f"Epoch {n}: vhigh_band slice all NaN, thirty_sec={thirty_sec}, vhigh_band={vhigh_band}")
-            if np.isnan(psd[thirty_sec][:, whole_band]).all():
-                print(f"Epoch {n}: whole_band slice all NaN, thirty_sec={thirty_sec}, whole_band={whole_band}")
+            # if np.isnan(psd[thirty_sec][:, vhigh_band]).all():
+            #     print(f"Epoch {n}: vhigh_band slice all NaN, thirty_sec={thirty_sec}, vhigh_band={vhigh_band}")
+            # if np.isnan(psd[thirty_sec][:, whole_band]).all():
+            #     print(f"Epoch {n}: whole_band slice all NaN, thirty_sec={thirty_sec}, whole_band={whole_band}")
             # print(f"psd[thirty_sec].shape={psd[thirty_sec].shape}")
 
             # Ensure PSD slices are arrays
@@ -252,7 +258,8 @@ def sawtooth_detector(eeg, n_stride):
 
 # Band range for frequency bands
 def band_range(low, high, binsize):
-    return np.arange(int(low / binsize), int(high / binsize) + 1)
+    # Use int(round(...)) to match MATLAB's rounding, and subtract 1 for Python's 0-based indexing
+    return np.arange(int(round(low / binsize)), int(round(high / binsize)) + 1)
 
 # Mean power in a frequency band
 def mean_band_power(psd, fmin, fmax, bin_width):
