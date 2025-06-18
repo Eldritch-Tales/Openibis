@@ -19,6 +19,10 @@ def openibis(eeg_input):
     Fs, stride = 128, 0.5
     BSRmap, BSR = suppression(eeg, Fs, stride)
 
+    print("BSRmap[:100]:", BSRmap[:100])
+    print("Suppressed epochs:", np.sum(BSRmap))
+    print("Total epochs:", len(BSRmap))
+
     time = np.arange(len(eeg)) * stride
 
     components = log_power_ratios(eeg, Fs, stride, BSRmap)
@@ -83,6 +87,8 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
     suppression_filter = piecewise(np.arange(0, 64, 0.5), [0, 3, 6], [0, 0.25, 1]) ** 2
     components = np.full((N, 3), np.nan)
 
+    valid_count = 0
+
     for n in range(N):
         if is_not_burst_suppressed(BSRmap, n, 4):
             seg_hi = segment(eeg_hi, n + 4, 4, n_stride)
@@ -92,11 +98,15 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
             if sawtooth_detector(seg_raw, n_stride):
                 psd[n, :] *= suppression_filter
 
+            if np.isnan(psd[n, :]).all():
+                print(f"Epoch {n}: psd is all NaNs")
+            else:
+                valid_count += 1
+
         thirty_sec = time_range(30, n, stride)
 
         try:
-            # vhigh_band = band_range(39.5, 46.5, 0.5)
-            vhigh_band = band_range(30, 37, 0.5)
+            vhigh_band = band_range(39.5, 46.5, 0.5)
             vhigh_band_alt = band_range(40, 47, 0.5)
             whole_band = band_range(0.5, 46.5, 0.5)
             whole_band_alt = band_range(1, 47, 0.5)
@@ -104,7 +114,7 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
 
             # Checks if the thirty second index range is empty, skips current iteration if so
             if len(thirty_sec) == 0 or np.isnan(psd[thirty_sec][:, mid_band]).all():
-                # print("Empty slice")
+                print("Empty slice")
                 continue  # skip this epoch
 
             # Ensure PSD slices are arrays
@@ -118,8 +128,8 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
                 raise ValueError(f"Mismatched PSD slice shapes: {vhigh_slice1.shape} vs {vhigh_slice2.shape}")
 
             # Compute geometric means safely
-            vhigh = np.sqrt(np.mean(vhigh_slice1 * vhigh_slice2, axis=1))
-            whole = np.sqrt(np.mean(whole_slice1 * whole_slice2, axis=1))
+            vhigh = np.sqrt(np.nanmean(vhigh_slice1 * vhigh_slice2, axis=1))
+            whole = np.sqrt(np.nanmean(whole_slice1 * whole_slice2, axis=1))
 
             # Safe ratio with divide
             ratio = np.divide(vhigh, whole, out=np.full_like(vhigh, np.nan), where=whole != 0)
@@ -127,14 +137,14 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
             log_ratios = 10 * np.log10(safe_ratio)
 
             # DEBUG: Print diagnostic info for component[1]
-            if n%100 == 0:
-                print(f"\nEpoch {n}")
-                print(f"vhigh_slice1 mean: {np.nanmean(vhigh_slice1):.4f}")
-                print(f"vhigh_slice2 mean: {np.nanmean(vhigh_slice2):.4f}")
-                print(f"whole_slice1 mean: {np.nanmean(whole_slice1):.4f}")
-                print(f"whole_slice2 mean: {np.nanmean(whole_slice2):.4f}")
-                print(f"ratio mean: {np.nanmean(ratio):.4f}")
-                print(f"log10(ratio): {np.nanmean(10 * np.log10(np.maximum(ratio, 1e-8))):.2f} dB")
+            # if n%100 == 0:
+            #     print(f"\nEpoch {n}")
+            #     print(f"vhigh_slice1 mean: {np.nanmean(vhigh_slice1):.4f}")
+            #     print(f"vhigh_slice2 mean: {np.nanmean(vhigh_slice2):.4f}")
+            #     print(f"whole_slice1 mean: {np.nanmean(whole_slice1):.4f}")
+            #     print(f"whole_slice2 mean: {np.nanmean(whole_slice2):.4f}")
+            #     print(f"ratio mean: {np.nanmean(ratio):.4f}")
+            #     print(f"log10(ratio): {np.nanmean(10 * np.log10(np.maximum(ratio, 1e-8))):.2f} dB")
             
             mid_psd_slice = psd[thirty_sec][:, mid_band]
 
@@ -146,9 +156,22 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
 
             components[n, 0] = mean_band_power(psd[thirty_sec], 30, 47, 0.5) - mid_power
 
+            if np.any(np.isnan(vhigh)) or np.any(np.isnan(whole)):
+                print(f"Epoch {n}: NaNs in vhigh or whole slices → skipping Component 1")
+                continue
+
+            if np.any(np.isnan(ratio)):
+                print(f"Epoch {n}: NaNs in ratio → skipping Component 1")
+                continue
+
+            log_ratio = 10 * np.log10(safe_ratio)
+            if np.any(np.isnan(log_ratio)):
+                print(f"Epoch {n}: NaNs in log10 ratio → skipping Component 1")
+                continue
+
             # Avoid trim_mean if too few values
             if log_ratios.size >= 2:
-                components[n, 1] = trim_mean(log_ratios, 0.5)
+                components[n, 1] = trim_mean(log_ratios, 0.2)
             else:
                 components[n, 1] = np.nanmean(log_ratios)
                         
@@ -166,6 +189,7 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
         # plt.legend()
         # plt.title("Component 1 inputs")
         # plt.show()
+    print(f"Valid PSDs: {valid_count}/{N}")
 
     return components
 
