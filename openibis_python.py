@@ -106,6 +106,9 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
 
             # Checking to see if psd is faulty
             print(f"Epoch {n}: PSD min={np.nanmin(psd[n])}, max={np.nanmax(psd[n])}")
+        
+        else:
+            print(f"Epoch {n} is considered burst-suppressed, skipping PSD calculation")
 
         thirty_sec = time_range(30, n, stride)
 
