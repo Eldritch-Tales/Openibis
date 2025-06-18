@@ -1,9 +1,8 @@
 # Author: Sriram Schelbert
 # Date: May 23, 2025
 
-
 import numpy as np
-from scipy.signal import butter, filtfilt, fftconvolve
+from scipy.signal import butter, filtfilt, fftconvolve, lfilter
 from scipy.fft import fft
 from scipy.stats import trim_mean
 from scipy.ndimage import uniform_filter1d
@@ -26,7 +25,7 @@ def openibis(eeg_input):
     time = np.arange(len(eeg)) * stride
 
     components = log_power_ratios(eeg, Fs, stride, BSRmap)
-    components = np.nan_to_num(components, nan=0.0)
+    # components = np.nan_to_num(components, nan=0.0)
 
     depth_of_anesthesia = mixer(components, BSR)
 
@@ -65,7 +64,7 @@ def n_epochs(eeg, Fs, stride):
 
 # Extract a segment of the EEG data
 def segment(eeg, start, number, n_stride):
-    start_index = int(start * n_stride)
+    start_index = int(round(start * n_stride))
     end_index = start_index + int(number * n_stride)
     if end_index > len(eeg):
         return np.array([])  # or pad with zeros
@@ -81,7 +80,7 @@ def baseline(x):
 def log_power_ratios(eeg, Fs, stride, BSRmap):
     N, n_stride = n_epochs(eeg, Fs, stride)
     B, A = butter(2, 0.65 / (Fs / 2), btype='high')
-    eeg_hi = filtfilt(B, A, eeg)
+    eeg_hi = lfilter(B, A, eeg)
 
     psd = np.full((N, int(4 * n_stride / 2)), np.nan)
     suppression_filter = piecewise(np.arange(0, 64, 0.5), [0, 3, 6], [0, 0.25, 1]) ** 2
