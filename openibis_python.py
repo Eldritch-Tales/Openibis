@@ -114,7 +114,7 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
 
             # Checks if the thirty second index range is empty, skips current iteration if so
             if len(thirty_sec) == 0 or np.isnan(psd[thirty_sec][:, mid_band]).all():
-                print("Empty slice")
+                print(f"Epoch {n}: Empty slice")
                 continue  # skip this epoch
 
             # Ensure PSD slices are arrays
@@ -122,6 +122,13 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
             vhigh_slice2 = np.asarray(psd[thirty_sec][:, vhigh_band_alt])
             whole_slice1 = np.asarray(psd[thirty_sec][:, whole_band])
             whole_slice2 = np.asarray(psd[thirty_sec][:, whole_band_alt])
+
+            # Diagnostic Statements
+            if np.isnan(psd[thirty_sec][:, vhigh_band]).all() or np.isnan(psd[thirty_sec][:, whole_band]).all():
+                print(f"Epoch {n}: Component 1 slices fully NaN")
+
+            if np.isnan(psd[thirty_sec][:, band_range(0.5, 4, 0.5)]).all():
+                print(f"Epoch {n}: Component 2 low band slice fully NaN")
 
             # Defensive checks
             if vhigh_slice1.shape != vhigh_slice2.shape or whole_slice1.shape != whole_slice2.shape:
