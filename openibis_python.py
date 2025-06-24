@@ -40,6 +40,7 @@ def openibis(eeg_input):
 
     return depth_of_anesthesia
 
+# Determines whether an EEG segment is burst-suppressed and calculates BSR
 def suppression(eeg, Fs, stride):
     N, n_stride = n_epochs(eeg, Fs, stride)
     BSRmap = np.zeros(N)
@@ -50,35 +51,7 @@ def suppression(eeg, Fs, stride):
     BSR = 100 * causal_moving_average(BSRmap, window)
     return BSRmap, BSR
 
-def causal_moving_average(x, window_size):
-    # Pad the left side with zeros to maintain alignment (like MATLAB's movmean(..., [M 0]))
-    padded = np.pad(x, (window_size - 1, 0), mode='constant', constant_values=0)
-    smoothed = uniform_filter1d(padded, size=window_size, origin=0)[(window_size - 1):]
-    return smoothed
-
-# Calculate the number of epochs
-def n_epochs(eeg, Fs, stride):
-    n_stride = int(round(Fs * stride))
-    N = math.floor((len(eeg) - Fs) / n_stride) - 10
-    return N, n_stride
-
-# Extract a segment of the EEG data
-def segment(eeg, start, number, n_stride):
-    start_index = int(round(start * n_stride))
-    end_index = start_index + int(round(number * n_stride))
-    print(f"Segment: start={start}, n_stride={n_stride}, start_index={start_index}, end_index={end_index}, len(eeg)={len(eeg)}")
-    if end_index > len(eeg):
-        print("Returning empty segment!")
-        return np.array([])
-    return eeg[start_index:end_index]
-
-# Baseline correction for EEG
-def baseline(x):
-    v = np.vstack([np.arange(1, len(x) + 1)**p for p in range(2)]).T
-    coeffs = np.linalg.lstsq(v, x, rcond=None)[0]
-    return v @ coeffs
-
-# Log-power ratios calculation
+# Calculates a family of components, based on log-power ratios
 def log_power_ratios(eeg, Fs, stride, BSRmap):
     N, n_stride = n_epochs(eeg, Fs, stride)
     B, A = butter(2, 0.65 / (Fs / 2), btype='high')
@@ -179,18 +152,18 @@ def log_power_ratios(eeg, Fs, stride, BSRmap):
 
             components[n, 0] = mean_band_power(psd[thirty_sec], 30, 47, 0.5) - mid_power
 
-            if np.any(np.isnan(vhigh)) or np.any(np.isnan(whole)):
-                print(f"Epoch {n}: NaNs in vhigh or whole slices → skipping Component 1")
-                continue
+            # if np.any(np.isnan(vhigh)) or np.any(np.isnan(whole)):
+            #     print(f"Epoch {n}: NaNs in vhigh or whole slices → skipping Component 1")
+            #     continue
 
-            if np.any(np.isnan(ratio)):
-                print(f"Epoch {n}: NaNs in ratio → skipping Component 1")
-                continue
+            # if np.any(np.isnan(ratio)):
+            #     print(f"Epoch {n}: NaNs in ratio → skipping Component 1")
+            #     continue
 
-            log_ratio = 10 * np.log10(safe_ratio)
-            if np.any(np.isnan(log_ratio)):
-                print(f"Epoch {n}: NaNs in log10 ratio → skipping Component 1")
-                continue
+            # log_ratio = 10 * np.log10(safe_ratio)
+            # if np.any(np.isnan(log_ratio)):
+            #     print(f"Epoch {n}: NaNs in log10 ratio → skipping Component 1")
+            #     continue
 
             # Avoid trim_mean if too few values
             if log_ratios.size >= 2:
@@ -259,10 +232,27 @@ def sawtooth_detector(eeg, n_stride):
 
     return np.nanmax(m_ratio) > 0.63
 
-# Band range for frequency bands
-def band_range(low, high, binsize):
-    # Use int(round(...)) to match MATLAB's rounding, and subtract 1 for Python's 0-based indexing
-    return np.arange(int(round(low / binsize)), int(round(high / binsize)) + 1)
+# Mixer: Calculates depth of anesthesia score
+def mixer(components, BSR):
+    sedation_score = scurve(components[:, 0], 104.4, 49.4, -13.9, 5.29)
+    general_score = piecewise(components[:, 1], [-60.89, -30], [-40, 43.1])
+    general_score += scurve(components[:, 1], 61.3, 72.6, -24.0, 3.55) * (components[:, 1] >= -30)
+
+    bsr_score = piecewise(BSR, [0, 100], [50, 0])
+    general_weight = piecewise(components[:, 2], [0, 5], [0.5, 1]) * (general_score < sedation_score)
+    bsr_weight = piecewise(BSR, [10, 50], [0, 1])
+
+    x = (sedation_score * (1 - general_weight)) + (general_score * general_weight)
+    y = piecewise(x, [-40, 10, 97, 110], [0, 10, 97, 100]) * (1 - bsr_weight) + bsr_score * bsr_weight
+    return y
+
+# ------------ Helper Functions ------------
+
+# Calculate the number of epochs
+def n_epochs(eeg, Fs, stride):
+    n_stride = int(round(Fs * stride))
+    N = math.floor((len(eeg) - Fs) / n_stride) - 10
+    return N, n_stride
 
 # Mean power in a frequency band
 def mean_band_power(psd, fmin, fmax, bin_width):
@@ -271,6 +261,31 @@ def mean_band_power(psd, fmin, fmax, bin_width):
     if np.isnan(v).all():
         return np.nan
     return np.nanmean(10 * np.log10(v + 1e-8))
+
+# Band range for frequency bands
+def band_range(low, high, binsize):
+    # Use int(round(...)) to match MATLAB's rounding, and subtract 1 for Python's 0-based indexing
+    return np.arange(int(round(low / binsize)), int(round(high / binsize)) + 1)
+
+# Baseline correction for EEG
+def baseline(x):
+    v = np.vstack([np.arange(1, len(x) + 1)**p for p in range(2)]).T
+    coeffs = np.linalg.lstsq(v, x, rcond=None)[0]
+    return v @ coeffs
+
+# Bound the values between a lower and upper bound
+def bound(x, lower, upper):
+    return np.clip(x, lower, upper)
+
+# Extract a segment of the EEG data
+def segment(eeg, start, number, n_stride):
+    start_index = int(round(start * n_stride))
+    end_index = start_index + int(round(number * n_stride))
+    # print(f"Segment: start={start}, n_stride={n_stride}, start_index={start_index}, end_index={end_index}, len(eeg)={len(eeg)}")
+    if end_index > len(eeg):
+        print("Returning empty segment!")
+        return np.array([])
+    return eeg[start_index:end_index]
 
 # Check if an epoch is burst-suppressed
 def is_not_burst_suppressed(BSRmap, n, p, threshold=0.5):
@@ -307,20 +322,6 @@ def prctmean(x, lo, hi):
     upper = np.percentile(x, hi)
     return np.mean(x[(x >= lower) & (x <= upper)])
 
-# Mixer: Calculates depth of anesthesia score
-def mixer(components, BSR):
-    sedation_score = scurve(components[:, 0], 104.4, 49.4, -13.9, 5.29)
-    general_score = piecewise(components[:, 1], [-60.89, -30], [-40, 43.1])
-    general_score += scurve(components[:, 1], 61.3, 72.6, -24.0, 3.55) * (components[:, 1] >= -30)
-
-    bsr_score = piecewise(BSR, [0, 100], [50, 0])
-    general_weight = piecewise(components[:, 2], [0, 5], [0.5, 1]) * (general_score < sedation_score)
-    bsr_weight = piecewise(BSR, [10, 50], [0, 1])
-
-    x = (sedation_score * (1 - general_weight)) + (general_score * general_weight)
-    y = piecewise(x, [-40, 10, 97, 110], [0, 10, 97, 100]) * (1 - bsr_weight) + bsr_score * bsr_weight
-    return y
-
 # Piecewise linear interpolation function
 def piecewise(x, xp, yp):
     x = np.array(x)
@@ -333,6 +334,8 @@ def scurve(x, Eo, Emax, x50, xwidth):
     x = np.array(x)
     return Eo - Emax / (1 + np.exp((x - x50) / xwidth))
 
-# Bound the values between a lower and upper bound
-def bound(x, lower, upper):
-    return np.clip(x, lower, upper)
+def causal_moving_average(x, window_size):
+    # Pad the left side with zeros to maintain alignment (like MATLAB's movmean(..., [M 0]))
+    padded = np.pad(x, (window_size - 1, 0), mode='constant', constant_values=0)
+    smoothed = uniform_filter1d(padded, size=window_size, origin=0)[(window_size - 1):]
+    return smoothed
